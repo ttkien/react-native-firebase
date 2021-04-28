@@ -7,7 +7,7 @@ coreVersionRequired = package['peerDependencies'][appPackage['name']]
 if appPackage['sdkVersions']
   firebase_sdk_version = appPackage['sdkVersions']['ios']['firebase']
 else
-  firebase_sdk_version = '~> 6.28.1'
+  firebase_sdk_version = '~> 7.11.0'
 end
 if coreVersionDetected != coreVersionRequired
   Pod::UI.warn "NPM package '#{package['name']}' depends on '#{appPackage['name']}' v#{coreVersionRequired} but found v#{coreVersionDetected}, this might cause build issues or runtime crashes."
@@ -38,7 +38,7 @@ Pod::Spec.new do |s|
   end
 
   # Firebase dependencies
-  s.dependency          'Firebase/Analytics', firebase_sdk_version
+  s.dependency          'Firebase/AnalyticsWithoutAdIdSupport', firebase_sdk_version
 
   if defined?($RNFirebaseAsStaticFramework)
     Pod::UI.puts "#{s.name}: Using overridden static_framework value of '#{$RNFirebaseAsStaticFramework}'"
