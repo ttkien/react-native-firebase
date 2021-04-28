@@ -1,10 +1,10 @@
 require 'json'
 package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
-appPackage = JSON.parse(File.read(File.join('..', 'app', 'package.json')))
+appPackage = JSON.parse(File.read(File.join('package.json')))
 
 coreVersionDetected = appPackage['version']
 coreVersionRequired = package['peerDependencies'][appPackage['name']]
-firebase_sdk_version = appPackage['sdkVersions']['ios']['firebase']
+firebase_sdk_version = "7.11.0"
 
 if coreVersionDetected != coreVersionRequired
   Pod::UI.warn "NPM package '#{package['name']}' depends on '#{appPackage['name']}' v#{coreVersionRequired} but found v#{coreVersionDetected}, this might cause build issues or runtime crashes."
