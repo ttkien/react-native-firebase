@@ -382,7 +382,6 @@ export namespace FirebaseMessagingTypes {
    * An interface representing all the available permissions that can be requested by your app via
    * the `requestPermission` API.
    */
-  // eslint-disable-next-line @typescript-eslint/interface-name-prefix
   export interface IOSPermissions {
     /**
      * Request permission to display alerts.
@@ -552,6 +551,10 @@ export namespace FirebaseMessagingTypes {
      *
      * See `onNotificationOpenedApp` to subscribe to when the notification is opened when the app
      * is in a background state.
+     *
+     * Beware of this [issue](https://github.com/invertase/react-native-firebase/issues/3469#issuecomment-660121376) when integrating with splash screen modules. If you are using
+     * `react-native-splash-screen` we strongly recommend you migrate to `react-native-bootsplash`
+     * which is actively maintained and avoids these issues
      */
     getInitialNotification(): Promise<RemoteMessage | null>;
 
@@ -604,7 +607,16 @@ export namespace FirebaseMessagingTypes {
      * @param authorizedEntity The messaging sender ID. In most cases this will be the current default app.
      * @param scope The scope to assign a token, which the sever can use to target messages at.
      */
-    getToken(authorizedEntity?: string, scope?: string = 'FCM'): Promise<string>;
+    getToken(authorizedEntity?: string, scope?: string): Promise<string>;
+
+    /**
+     * Returns wether the root view is headless or not
+     * i.e true if the app was launched in the background (for example, by data-only cloud message)
+     *
+     * More info: https://rnfirebase.io/messaging/usage#background-application-state
+     * @platform ios iOS
+     */
+    getIsHeadless(): Promise<boolean>;
 
     /**
      * Removes access to an FCM token previously authorized by it's scope. Messages sent by the server
@@ -619,7 +631,7 @@ export namespace FirebaseMessagingTypes {
      * @param authorizedEntity The messaging sender ID. In most cases this will be the current default app.
      * @param scope The scope to assign when token will be deleted.
      */
-    deleteToken(authorizedEntity?: string, scope?: string = 'FCM'): Promise<void>;
+    deleteToken(authorizedEntity?: string, scope?: string): Promise<void>;
 
     /**
      * When any FCM payload is received, the listener callback is called with a `RemoteMessage`.
@@ -655,6 +667,10 @@ export namespace FirebaseMessagingTypes {
      *
      * See `getInitialNotification` to see how to watch for when a notification opens the app from a
      * quit state.
+     *
+     * Beware of this [issue](https://github.com/invertase/react-native-firebase/issues/3469#issuecomment-660121376) when integrating with splash screen modules. If you are using
+     * `react-native-splash-screen` we strongly recommend you migrate to `react-native-bootsplash`
+     * which is actively maintained and avoids these issues
      *
      * @param listener Called with a `RemoteMessage` when a notification press opens the application.
      */
@@ -822,6 +838,8 @@ export namespace FirebaseMessagingTypes {
      * unsubscribe();
      * ```
      *
+     * NOTE: Android only
+     *
      * @param listener Called when the FCM deletes pending messages.
      */
     onDeletedMessages(listener: () => void): () => void;
@@ -841,6 +859,8 @@ export namespace FirebaseMessagingTypes {
      * // Unsubscribe from message sent events
      * unsubscribe();
      * ```
+     *
+     * NOTE: Android only
      *
      * @param listener Called when the FCM sends the remote message to FCM.
      */
@@ -862,6 +882,8 @@ export namespace FirebaseMessagingTypes {
      * // Unsubscribe from message sent error events
      * unsubscribe();
      * ```
+     *
+     * NOTE: Android only
      *
      * @param listener
      */
@@ -889,7 +911,7 @@ export namespace FirebaseMessagingTypes {
      * ```
      *
      */
-    setBackgroundMessageHandler(handler: (message: RemoteMessage) => Promise<any>);
+    setBackgroundMessageHandler(handler: (message: RemoteMessage) => Promise<any>): void;
 
     /**
      * Send a new `RemoteMessage` to the FCM server.
@@ -907,6 +929,8 @@ export namespace FirebaseMessagingTypes {
      *   }
      * });
      * ```
+     *
+     * NOTE: Android only
      *
      * @param message A `RemoteMessage` interface.
      */
@@ -941,26 +965,25 @@ export namespace FirebaseMessagingTypes {
   }
 }
 
-declare module '@react-native-firebase/messaging' {
-  // tslint:disable-next-line:no-duplicate-imports required otherwise doesn't work
-  import { ReactNativeFirebase } from '@react-native-firebase/app';
-  import ReactNativeFirebaseModule = ReactNativeFirebase.Module;
-  import FirebaseModuleWithStatics = ReactNativeFirebase.FirebaseModuleWithStatics;
+declare const defaultExport: ReactNativeFirebase.FirebaseModuleWithStatics<
+  FirebaseMessagingTypes.Module,
+  FirebaseMessagingTypes.Statics
+>;
 
-  const firebaseNamedExport: {} & ReactNativeFirebaseModule;
-  export const firebase = firebaseNamedExport;
+export const firebase: ReactNativeFirebase.Module & {
+  messaging: typeof defaultExport;
+  app(
+    name?: string,
+  ): ReactNativeFirebase.FirebaseApp & { messaging(): FirebaseMessagingTypes.Module };
+};
 
-  const defaultExport: FirebaseModuleWithStatics<
-    FirebaseMessagingTypes.Module,
-    FirebaseMessagingTypes.Statics
-  >;
-  export default defaultExport;
-}
+export default defaultExport;
 
 /**
  * Attach namespace to `firebase.` and `FirebaseApp.`.
  */
 declare module '@react-native-firebase/app' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   namespace ReactNativeFirebase {
     import FirebaseModuleWithStatics = ReactNativeFirebase.FirebaseModuleWithStatics;
     interface Module {
@@ -973,23 +996,5 @@ declare module '@react-native-firebase/app' {
     interface FirebaseApp {
       messaging(): FirebaseMessagingTypes.Module;
     }
-  }
-}
-
-namespace ReactNativeFirebase {
-  interface FirebaseJsonConfig {
-    messaging_auto_init_enabled?: boolean;
-    messaging_android_headless_task_timeout?: number;
-    messaging_android_notification_channel_id?: string;
-    messaging_android_notification_color?: string;
-    /**
-     * Whether RNFirebase Messaging automatically calls `[[UIApplication sharedApplication] registerForRemoteNotifications];`
-     * automatically on app launch (recommended) - defaults to true.
-     *
-     * If set to false; make sure to call `firebase.messaging().registerDeviceForRemoteMessages()`
-     * early on in your app startup - otherwise you will NOT receive remote messages/notifications
-     * in your app.
-     */
-    messaging_ios_auto_register_for_remote_messages?: boolean;
   }
 }

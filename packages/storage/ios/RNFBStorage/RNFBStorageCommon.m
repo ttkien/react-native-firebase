@@ -63,7 +63,7 @@
       (__bridge CFStringRef) [localFilePath pathExtension],
       NULL);
   CFStringRef mimeType = UTTypeCopyPreferredTagWithClass(UTI, kUTTagClassMIMEType);
-  CFRelease(UTI);
+  if (UTI) { CFRelease(UTI); }
 
   if (!mimeType) {
     return @"application/octet-stream";
@@ -79,6 +79,12 @@
 ))completion {
   if ([RNFBUtilsModule isRemoteAsset:localFilePath]) {
     PHAsset *asset = [RNFBUtilsModule fetchAssetForPath:localFilePath];
+      
+  if (!asset) {
+    completion(@[@"asset-library-removed", @"iOS 'asset-library://' & 'ph://' URLs have been removed, please provide the correct path to resource."], nil, nil);
+      
+    return;
+  }
     NSURL *temporaryFileUrl = [RNFBStorageCommon createTempFileUrl];
     [RNFBStorageCommon downloadAsset:asset toURL:temporaryFileUrl completion:^(
         NSArray *errorCodeMessageArray,

@@ -54,8 +54,8 @@ function App() {
     <View>
       <Button
         title="Add To Basket"
-        onPress={() =>
-          analytics().logEvent('basket', {
+        onPress={async () =>
+          await analytics().logEvent('basket', {
             id: 3745092,
             item: 'mens grey t-shirt',
             description: ['round neck', 'long sleeved'],
@@ -89,8 +89,8 @@ function App() {
         title="Press me"
         // Logs in the firebase analytics console as "select_content" event
         // only accepts the two object properties which accept strings.
-        onPress={() =>
-          analytics().logSelectContent({
+        onPress={async () =>
+          await analytics().logSelectContent({
             content_type: 'clothing',
             item_id: 'abcd',
           })
@@ -119,6 +119,18 @@ with any of the following event names will throw an error.
 | `screen_view`          | `user_engagement`         | `ad_impression`     |
 | `ad_click`             | `ad_query`                | `ad_exposure`       |
 | `adunit_exposure`      | `ad_activeiew`            |
+
+## App instance id
+
+Below is an example showing how to retrieve the app instance id of the application. This will return null on android
+if FirebaseAnalytics.ConsentType.ANALYTICS_STORAGE has been set to FirebaseAnalytics.ConsentStatus.DENIED and null on
+iOS if ConsentType.analyticsStorage has been set to ConsentStatus.denied.
+
+```jsx
+import analytics from '@react-native-firebase/analytics';
+// ...
+const appInstanceId = await analytics().getAppInstanceId();
+```
 
 # firebase.json
 
